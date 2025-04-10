@@ -1,0 +1,71 @@
+.yoe-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: orange;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 100;
+}
+
+.yoe-scan-button {
+  position: fixed;
+  top: 70px;
+  right: 10px;
+  z-index: 9999;
+  background-color: #0a66c2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.yoe-scan-button:hover {
+  background-color: #004182;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+}
+
+.yoe-scan-button:active {
+  background-color: #004182;
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.sponsor-badge {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 100;
+  background-color: #e74c3c;
+  color: white;
+}
+
+#scanning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay-message {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  font-weight: bold;
+}

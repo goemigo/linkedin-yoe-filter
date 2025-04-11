@@ -25,10 +25,9 @@ This Chrome extension enhances your experience on LinkedIn's job search by:
 
 ## ⚠️ Limitations
 
-- **YOE and sponsorship detection is regex-based**, and since job descriptions are written in free-form text, it's around 95% accurate in practice.
-  - it might misinterpret company history (e.g. “We’ve been around for 10 years”) as a required experience level
+- **YOE and sponsorship detection is regex-based**, and since job descriptions are written in free-form text, it's around 95% (at least) accurate in practice.
 - If a job description mentions multiple experience levels (e.g. “3 years of React, 5 years of Java”), the extension currently picks up the first one it finds — which may not always reflect the main requirement.
-- I considered using an AI model for better accuracy, but it felt like overkill and potentially costly to deploy for a lightweight Chrome Extension. Feel free to fork the repo and explore more robust parsing logic or add your own features!
+- I considered using an AI model for better accuracy, but it felt like overkill and potentially costly to deploy for a lightweight Chrome Extension. Feel free to fork the repo and explore more robust & performant parsing logic or add your own features!
 
 
 ## 📸 Screenshots

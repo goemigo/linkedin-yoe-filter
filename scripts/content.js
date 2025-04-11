@@ -4,18 +4,78 @@ let isScanning = false;
 let lastUrl = window.location.href;
 
 function extractYOE(text) {
+  if (text.match(/for\s+(over\s+)?\d+\s+years/i)) {
+    // Check if this appears to be about company history
+    const companyHistoryPatterns = [
+      /company.+for\s+(over\s+)?\d+\s+years/i,
+      /business.+for\s+(over\s+)?\d+\s+years/i,
+      /industry.+for\s+(over\s+)?\d+\s+years/i,
+      /founded.+\d+\s+years/i,
+      /established.+\d+\s+years/i,
+      /history.+\d+\s+years/i,
+      /over\s+\d{3}\s+years/i,
+    ];
+
+    for (const pattern of companyHistoryPatterns) {
+      if (pattern.test(text)) {
+        const sections = text.split(/\.\s+/);
+        text = sections.filter((section) => !pattern.test(section)).join(". ");
+      }
+    }
+  }
+
   const patterns = [
-    /(\d+)\s*(?:-|to)\s*(\d+)\s*(?:years|yrs|yr|year)(?:\s+of\s+experience|\s+exp|\s+experience|\s+work\s+experience)?/i,
-    /(\d+)\+\s*(?:years|yrs|yr|year)(?:\s+of\s+experience|\s+exp|\s+experience|\s+work\s+experience)?/i,
-    /(?:minimum|min|at least)\s+(\d+)\s*(?:years|yrs|yr|year)(?:\s+of\s+experience|\s+exp|\s+experience|\s+work\s+experience)?/i,
-    /(?:less\s+than|under|maximum|max)\s+(\d+)\s*(?:years|yrs|yr|year)/i,
-    /\((\d+)\)\s*(?:years|yrs|yr|year)/i, //number in parentheses
-    /(\d+)\s*(?:years|yrs|yr|year)/i, //other cases, number followed by years
+    // Range with plus (e.g., "8-10+ years")
+    /((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:[-–—]|to)\s*((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:years|yrs|yr|year)/i,
+
+    // Simple range (e.g., "3-5 years")
+    /((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:[-–—]|to)\s*((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:years|yrs|yr|year)(?:\s+of\s+experience|\s+exp|\s+experience|\s+work\s+experience)?/i,
+
+    // Plus pattern (e.g., "5+ years")
+    /((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\+\s*(?:years|yrs|yr|year)(?:\s+of\s+experience|\s+exp|\s+experience|\s+work\s+experience)?/i,
+
+    // Minimum pattern (e.g., "minimum 3 years")
+    /(?:minimum|min|at least)(?:\s+of)??\s+((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:\w+\s+)*(?:years|yrs|yr|year)(?:\s+of\s+experience|\s+exp|\s+experience|\s+work\s+experience)?/i,
+
+    // Less than pattern (e.g., "less than 2 years")
+    /(?:less\s+than|under|maximum|max)\s+((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:\w+\s+)*(?:years|yrs|yr|year)/i,
+
+    // Parentheses pattern (e.g., "(3) years")
+    /\(((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\)\s*(?:years|yrs|yr|year)/i,
+
+    // Simple years pattern (e.g., "5 years")
+    /((?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s*(?:years|yrs|yr|year)/i,
   ];
+
+  function extractNumber(match) {
+    if (/^\d+$/.test(match)) {
+      return parseInt(match);
+    } else {
+      const wordMap = {
+        one: 1,
+        two: 2,
+        three: 3,
+        four: 4,
+        five: 5,
+        six: 6,
+        seven: 7,
+        eight: 8,
+        nine: 9,
+        ten: 10,
+      };
+      return wordMap[match.toLowerCase()] || 0;
+    }
+  }
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
     if (match) {
+      // skip unreasonable YOE numbers (e.g., over 25)
+      const years = extractNumber(match[1]);
+      if (years > 25) {
+        continue;
+      }
+
       // Check if this is a "less than" pattern
       if (
         match[0].toLowerCase().includes("less than") ||
@@ -26,29 +86,40 @@ function extractYOE(text) {
         // For "less than X years", set min=0, max=X
         return {
           min: 0,
-          max: parseInt(match[1]),
-          display: `<${match[1]} years`,
+          max: extractNumber(match[1]),
+          display: `<${extractNumber(match[1])} years`,
+        };
+      } else if (match[2] && match[0].includes("+")) {
+        // Range with plus like "10-15+ years"
+        return {
+          min: extractNumber(match[1]),
+          max: extractNumber(match[2]),
+          display: `${extractNumber(match[1])}-${extractNumber(
+            match[2]
+          )}+ years`,
         };
       } else if (match[2]) {
         // Range like "3-5 years"
         return {
-          min: parseInt(match[1]),
-          max: parseInt(match[2]),
-          display: `${match[1]}-${match[2]} years`,
+          min: extractNumber(match[1]),
+          max: extractNumber(match[2]),
+          display: `${extractNumber(match[1])}-${extractNumber(
+            match[2]
+          )} years`,
         };
       } else if (match[0].includes("+")) {
         // "5+ years"
         return {
-          min: parseInt(match[1]),
-          max: parseInt(match[1]),
-          display: `${match[1]}+ years`,
+          min: extractNumber(match[1]),
+          max: extractNumber(match[1]),
+          display: `${extractNumber(match[1])}+ years`,
         };
       } else {
-        // Simple "5 years"
+        // Simple "5 years" or "seven years"
         return {
-          min: parseInt(match[1]),
-          max: parseInt(match[1]),
-          display: `${match[1]} years`,
+          min: extractNumber(match[1]),
+          max: extractNumber(match[1]),
+          display: `${extractNumber(match[1])} years`,
         };
       }
     }
@@ -83,7 +154,6 @@ function extractSponsorship(text) {
     /no H1B/i,
   ];
 
-  // Check if any pattern matches
   for (const pattern of restrictionPatterns) {
     if (pattern.test(text)) {
       return "No Sponsor";
@@ -94,7 +164,6 @@ function extractSponsorship(text) {
 }
 
 function initialize() {
-  // Get search result jobs
   jobElements = Array.from(
     document.querySelectorAll("[class*='jobs-search-']")
   ).filter(
@@ -138,7 +207,6 @@ function initialize() {
                 sponsorRestriction: sponsorRestriction,
               };
 
-              // display badges
               displayBadges(jobElement, yoeData, sponsorRestriction);
             }
           }
@@ -250,7 +318,7 @@ function scanAllJobs(index) {
 
     setTimeout(() => {
       try {
-        clearTimeout(fallbackTimer); // Clear the fallback timer if we proceed normally
+        clearTimeout(fallbackTimer);
 
         const jobDescription = document.querySelector(".jobs-description");
         if (jobDescription) {
@@ -275,7 +343,7 @@ function scanAllJobs(index) {
       } catch (error) {
         console.error(`Error processing job ${index}:`, error);
       } finally {
-        // Always move to the next job, even if there was an error
+        // Always move to the next job
         setTimeout(() => {
           scanAllJobs(index + 1);
         }, 500);
